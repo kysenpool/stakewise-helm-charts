@@ -1,4 +1,4 @@
-{{- if .Values.p2pNodePort.enabled -}}
+{{- if or .Values.p2pNodePort.enabled .Values.p2pNodePort.externalIp  -}}
 {{- range $i, $e := until (len .Values.global.executionEndpoints) }}
 {{- $port := add $.Values.p2pNodePort.startAt $i -}}
 {{- if hasKey $.Values.p2pNodePort.replicaToNodePort ($i | toString) -}}
@@ -21,6 +21,10 @@ metadata:
 spec:
   type: {{ $.Values.p2pNodePort.type }}
   externalTrafficPolicy: Local
+  {{- if not (eq $.Values.p2pNodePort.externalIp "" ) }}
+  externalIPs:
+    - {{$.Values.p2pNodePort.externalIp}}
+  {{- end }}
   ports:
     - name: p2p-tcp
       port: {{ include "prysm.p2pPort" $ }}

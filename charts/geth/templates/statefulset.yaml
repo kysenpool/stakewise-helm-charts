@@ -123,6 +123,9 @@ spec:
           {{- if .Values.p2pNodePort.enabled }}
               --nat=extip:$EXTERNAL_IP
               --port=$EXTERNAL_PORT
+          {{- else if .Values.p2pNodePort.externalIp }}
+              --nat=extip:{{ .Values.p2pNodePort.externalIp }}
+              --port={{ include "geth.p2pPort" . }}
           {{- else }}
               --nat=extip:$(POD_IP)
               --port={{ include "geth.p2pPort" . }}
@@ -169,14 +172,12 @@ spec:
             - name: metrics
               containerPort: {{ .Values.metrics.port }}
           {{- end }}
-          {{- if .Values.p2pNodePort.enabled }}
             - name: p2p-tcp
               containerPort: {{ include "geth.p2pPort" . }}
               protocol: TCP
             - name: p2p-udp
               containerPort: {{ include "geth.p2pPort" . }}
               protocol: UDP
-          {{- end }}
           volumeMounts:
             - name: data
               mountPath: /data/ethereum
