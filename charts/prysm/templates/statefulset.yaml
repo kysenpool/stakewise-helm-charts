@@ -85,6 +85,10 @@ spec:
               echo "p2p-host-ip: $EXTERNAL_IP"   > /config/config.yaml;
               echo "p2p-tcp-port: $EXTERNAL_PORT" >> /config/config.yaml;
               echo "p2p-udp-port: $EXTERNAL_PORT" >> /config/config.yaml;
+          {{- else if  .Values.p2pNodePort.externalIp }}
+              echo "p2p-host-ip: {{ .Values.p2pNodePort.externalIp }}"   > /config/config.yaml;
+              echo 'p2p-tcp-port: {{ include "prysm.p2pPort" . }}' >> /config/config.yaml;
+              echo 'p2p-udp-port: {{ include "prysm.p2pPort" . }}' >> /config/config.yaml;
           {{- else }}
               echo "p2p-host-ip: $POD_IP"   > /config/config.yaml;
               echo 'p2p-tcp-port: {{ include "prysm.p2pPort" . }}' >> /config/config.yaml;
@@ -103,11 +107,9 @@ spec:
               mountPath: /config
             - name: data
               mountPath: /data
-      {{- if or (eq .Values.global.network "prater") (eq .Values.global.network "goerli") (eq .Values.global.network "ropsten") (eq .Values.global.network "sepolia") }}
             - name: scripts
               mountPath: /data/scripts
-      {{- end }}
-      {{- if or (eq .Values.global.network "prater") (eq .Values.global.network "goerli") (eq .Values.global.network "ropsten") (eq .Values.global.network "sepolia") }}
+      {{- if or (eq .Values.global.network "prater") (eq .Values.global.network "goerli")  (eq .Values.global.network "holesky") (eq .Values.global.network "ropsten") (eq .Values.global.network "sepolia") }}
         - name: download-genesis-state
           image: "curlimages/curl:latest"
           imagePullPolicy: {{ .Values.initImage.pullPolicy }}
@@ -146,7 +148,7 @@ spec:
             - "--terminal-total-difficulty-override={{ .Values.totalDifficultyOverride }}"
           {{- end }}
 
-          {{- if or (eq .Values.global.network "prater") (eq .Values.global.network "goerli") (eq .Values.global.network "ropsten") (eq .Values.global.network "sepolia") }}
+          {{- if or (eq .Values.global.network "prater") (eq .Values.global.network "goerli")  (eq .Values.global.network "holesky") (eq .Values.global.network "ropsten") (eq .Values.global.network "sepolia") }}
             - "--genesis-state=/data/genesis.ssz"
           {{- end }}
 
@@ -190,7 +192,7 @@ spec:
             - containerPort: {{ .Values.rpc.port }}
               name: {{ .Values.rpc.portName }}
               protocol: TCP
-          {{- if .Values.p2pNodePort.enabled }}
+          {{- if or .Values.p2pNodePort.enabled .Values.p2pNodePort.externalIp }}
             - name: p2p-tcp
               containerPort: {{ include "prysm.p2pPort" . }}
               protocol: TCP
@@ -273,11 +275,9 @@ spec:
           configMap:
             name: {{ include "common.names.fullname" . }}-gnosis
       {{- end }}
-      {{- if or (eq .Values.global.network "prater") (eq .Values.global.network "goerli") (eq .Values.global.network "ropsten") (eq .Values.global.network "sepolia") }}
         - name: scripts
           configMap:
             name: {{ include "common.names.fullname" . }}
-      {{- end }}
 {{- if (not .Values.persistence.enabled) }}
         - name: data
           emptyDir: {}

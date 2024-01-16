@@ -206,6 +206,7 @@ p2pNodePort:
   replicaToNodePort: {}
   #  "0": 32345
   #  "3": 32348
+  externalIp: ""
 
 ## Settings for gRPC (beacon client api)
 ##
